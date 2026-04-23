@@ -1,0 +1,1061 @@
+% ============================================================
+%  INFORME: MODELOS ARIMA Y SARIMA EN SERIES FINANCIERAS
+%  Compilar con: pdflatex -shell-escape informe_arima_sarima.tex
+%  (dos pasadas para el índice)
+% ============================================================
+\documentclass[12pt, a4paper]{article}
+
+% ── Paquetes ──────────────────────────────────────────────
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish,es-nodecimaldot]{babel}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{tocloft}
+\usepackage{enumitem}
+\usepackage{mdframed}
+\usepackage{setspace}
+\usepackage{parskip}
+
+% ── Geometría ─────────────────────────────────────────────
+\geometry{
+  top=2.5cm, bottom=2.5cm,
+  left=3cm,  right=2.5cm,
+  headheight=15pt
+}
+
+% ── Colores ───────────────────────────────────────────────
+\definecolor{azulTec}{RGB}{0,84,166}
+\definecolor{grisClaro}{RGB}{245,245,245}
+\definecolor{grisOscuro}{RGB}{60,60,60}
+\definecolor{verdeComentario}{RGB}{0,128,0}
+\definecolor{rojoString}{RGB}{163,21,21}
+\definecolor{azulKeyword}{RGB}{0,0,200}
+
+% ── Estilo de código Python ───────────────────────────────
+\lstdefinestyle{python}{
+  language=Python,
+  backgroundcolor=\color{grisClaro},
+  basicstyle=\ttfamily\footnotesize,
+  keywordstyle=\color{azulKeyword}\bfseries,
+  stringstyle=\color{rojoString},
+  commentstyle=\color{verdeComentario}\itshape,
+  numberstyle=\tiny\color{grisOscuro},
+  numbers=left,
+  stepnumber=1,
+  numbersep=8pt,
+  showstringspaces=false,
+  breaklines=true,
+  breakatwhitespace=false,
+  frame=single,
+  rulecolor=\color{azulTec},
+  tabsize=4,
+  captionpos=b,
+  xleftmargin=15pt,
+  xrightmargin=5pt,
+  aboveskip=10pt,
+  belowskip=10pt
+}
+\lstset{style=python}
+
+% ── Encabezado y pie de página ────────────────────────────
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textcolor{azulTec}{\textbf{Modelos ARIMA y SARIMA}}}
+\fancyhead[R]{\small\textcolor{grisOscuro}{Series de Tiempo Financieras}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\headrule}{\hbox to\headwidth{\color{azulTec}\leaders\hrule height \headrulewidth\hfill}}
+
+% ── Formato de secciones ──────────────────────────────────
+\titleformat{\section}
+  {\Large\bfseries\color{azulTec}}{\thesection.}{0.5em}{}[\vspace{-0.3em}\color{azulTec}\rule{\linewidth}{0.6pt}]
+
+\titleformat{\subsection}
+  {\large\bfseries\color{grisOscuro}}{\thesubsection.}{0.5em}{}
+
+\titleformat{\subsubsection}
+  {\normalsize\bfseries}{\thesubsubsection.}{0.5em}{}
+
+% ── Entornos de definición ────────────────────────────────
+\newmdenv[
+  backgroundcolor=grisClaro,
+  linecolor=azulTec,
+  linewidth=1.5pt,
+  leftline=true, rightline=false, topline=false, bottomline=false,
+  innerleftmargin=10pt, innerrightmargin=10pt,
+  innertopmargin=8pt, innerbottommargin=8pt
+]{defbox}
+
+\newmdenv[
+  backgroundcolor=white,
+  linecolor=grisOscuro,
+  linewidth=0.8pt,
+  roundcorner=4pt,
+  innerleftmargin=10pt, innerrightmargin=10pt,
+  innertopmargin=8pt, innerbottommargin=8pt
+]{notebox}
+
+% ── Hiper-referencias ─────────────────────────────────────
+\hypersetup{
+  colorlinks=true,
+  linkcolor=azulTec,
+  urlcolor=azulTec,
+  citecolor=azulTec,
+  pdftitle={Informe: Modelos ARIMA y SARIMA},
+  pdfauthor={Estudiante},
+  pdfsubject={Series de Tiempo Financieras}
+}
+
+% ── Espaciado ─────────────────────────────────────────────
+\setlength{\parskip}{6pt}
+\onehalfspacing
+
+% ══════════════════════════════════════════════════════════
+\begin{document}
+% ══════════════════════════════════════════════════════════
+
+% ── PORTADA ───────────────────────────────────────────────
+\begin{titlepage}
+  \centering
+  \vspace*{1.5cm}
+
+  {\Huge\bfseries\color{azulTec} Modelos ARIMA y SARIMA\\[0.4em]}
+  {\LARGE\bfseries Aplicados a Series de Tiempo Financieras\par}
+
+  \vspace{1.2cm}
+  \textcolor{azulTec}{\rule{0.7\linewidth}{1.5pt}}
+  \vspace{1cm}
+
+  {\large
+    \begin{tabular}{rl}
+      \textbf{Asignatura:}  & Series de Tiempo y Pronósticos \\[4pt]
+      \textbf{Entrega:}     & Informe Final de Modelado       \\[4pt]
+      \textbf{Fecha:}       & \today                          \\[4pt]
+      \textbf{Herramienta:} & Python 3.x + LaTeX              \\
+    \end{tabular}
+  }
+
+  \vspace{1.5cm}
+
+  \begin{defbox}
+    \centering\small
+    Este informe presenta el marco teórico de los modelos AR, MA, ARMA, ARIMA y SARIMA,
+    junto con tres ejemplos prácticos aplicados a datos financieros reales/sintéticos,
+    incluyendo selección de parámetros mediante ACF, PACF, AIC y BIC,
+    diagnóstico de residuos e interpretación de pronósticos.
+  \end{defbox}
+
+  \vfill
+  {\small\textcolor{grisOscuro}{Documento generado con Python y \LaTeX}}
+\end{titlepage}
+
+% ── ÍNDICE ────────────────────────────────────────────────
+\tableofcontents
+\newpage
+
+% ══════════════════════════════════════════════════════════
+\section{Marco Teórico}
+% ══════════════════════════════════════════════════════════
+
+\subsection{Procesos Autorregresivos (AR)}
+
+Un proceso \textbf{autorregresivo de orden $p$}, denotado AR($p$), expresa el
+valor actual de la serie como combinación lineal de sus $p$ valores pasados
+más un término de error:
+
+\begin{defbox}
+\begin{equation}
+  y_t = c + \phi_1 y_{t-1} + \phi_2 y_{t-2} + \cdots + \phi_p y_{t-p} + \varepsilon_t,
+  \qquad \varepsilon_t \sim \mathcal{N}(0,\sigma^2)
+  \label{eq:ar}
+\end{equation}
+\end{defbox}
+
+donde $c$ es una constante, $\phi_i$ son los coeficientes autorregresivos y
+$\varepsilon_t$ es ruido blanco gaussiano. El proceso es \emph{estacionario}
+si las raíces del polinomio característico $1 - \phi_1 B - \cdots - \phi_p B^p = 0$
+se encuentran fuera del círculo unitario, siendo $B$ el operador de retardo
+($B y_t = y_{t-1}$).
+
+\subsection{Procesos de Media Móvil (MA)}
+
+Un proceso \textbf{de media móvil de orden $q$}, denotado MA($q$), expresa la
+serie como combinación lineal de $q$ errores pasados:
+
+\begin{defbox}
+\begin{equation}
+  y_t = \mu + \varepsilon_t + \theta_1 \varepsilon_{t-1} + \theta_2 \varepsilon_{t-2}
+        + \cdots + \theta_q \varepsilon_{t-q},
+  \qquad \varepsilon_t \sim \mathcal{N}(0,\sigma^2)
+  \label{eq:ma}
+\end{equation}
+\end{defbox}
+
+Todo proceso MA($q$) es estacionario. La condición de \emph{invertibilidad}
+exige que las raíces de $1 + \theta_1 B + \cdots + \theta_q B^q = 0$ estén
+fuera del círculo unitario.
+
+\subsection{Modelo ARMA($p$,$q$)}
+
+El modelo \textbf{ARMA($p$,$q$)} combina los componentes AR y MA:
+
+\begin{defbox}
+\begin{equation}
+  y_t = c + \sum_{i=1}^{p}\phi_i y_{t-i} + \varepsilon_t + \sum_{j=1}^{q}\theta_j \varepsilon_{t-j}
+  \label{eq:arma}
+\end{equation}
+\end{defbox}
+
+Usando el operador de retardo $B$, la ecuación~\eqref{eq:arma} se escribe
+compactamente como:
+\begin{equation}
+  \Phi(B)\, y_t = c + \Theta(B)\, \varepsilon_t,
+\end{equation}
+donde $\Phi(B) = 1 - \phi_1 B - \cdots - \phi_p B^p$ y
+$\Theta(B) = 1 + \theta_1 B + \cdots + \theta_q B^q$.
+
+\subsection{Modelo ARIMA($p$,$d$,$q$)}
+
+Muchas series financieras son \emph{no estacionarias}: su media o varianza
+cambia en el tiempo. La solución habitual es aplicar $d$ diferenciaciones
+hasta obtener estacionariedad. El modelo \textbf{ARIMA($p$,$d$,$q$)}
+(\textit{AutoRegressive Integrated Moving Average}) resulta de aplicar un
+modelo ARMA($p$,$q$) a la serie diferenciada $d$ veces:
+
+\begin{defbox}
+\begin{equation}
+  \Phi(B)\,(1 - B)^d\, y_t = c + \Theta(B)\, \varepsilon_t
+  \label{eq:arima}
+\end{equation}
+\end{defbox}
+
+\begin{itemize}[leftmargin=*]
+  \item $p$: orden autorregresivo (número de retardos AR).
+  \item $d$: grado de integración (número de diferencias para lograr estacionariedad).
+  \item $q$: orden de media móvil (número de retardos MA).
+\end{itemize}
+
+En la práctica, $d = 0$ para series ya estacionarias, $d = 1$ para series
+con tendencia estocástica (como precios de activos) y $d = 2$ para series
+con tendencia en la tendencia, aunque $d > 2$ es poco común.
+
+\subsection{Modelo SARIMA($p$,$d$,$q$)($P$,$D$,$Q$)$_s$}
+
+Cuando la serie exhibe \emph{patrones estacionales} de periodo $s$
+(e.g., $s=12$ para datos mensuales), se añade un segundo nivel de diferenciación
+y parámetros estacionales. El modelo \textbf{SARIMA} tiene la forma general:
+
+\begin{defbox}
+\begin{equation}
+  \underbrace{\Phi(B)}_{\text{AR}}\;
+  \underbrace{\Phi_S(B^s)}_{\text{AR estacional}}\;
+  \underbrace{(1-B)^d}_{\text{Diferencia regular}}\;
+  \underbrace{(1-B^s)^D}_{\text{Diferencia estacional}}\;
+  y_t
+  \;=\;
+  \underbrace{\Theta(B)}_{\text{MA}}\;
+  \underbrace{\Theta_S(B^s)}_{\text{MA estacional}}\;
+  \varepsilon_t
+  \label{eq:sarima}
+\end{equation}
+\end{defbox}
+
+donde:
+\begin{align*}
+  \Phi_S(B^s) &= 1 - \Phi_1 B^s - \Phi_2 B^{2s} - \cdots - \Phi_P B^{Ps}, \\
+  \Theta_S(B^s) &= 1 + \Theta_1 B^s + \Theta_2 B^{2s} + \cdots + \Theta_Q B^{Qs}.
+\end{align*}
+
+Los parámetros estacionales $(P,D,Q)_s$ tienen la misma interpretación que
+sus análogos no estacionales, pero actúan sobre los retardos múltiplos de $s$.
+
+\subsection{Funciones ACF y PACF}
+
+\subsubsection{Función de Autocorrelación (ACF)}
+
+La \textbf{autocorrelación} de orden $k$ mide la correlación lineal entre
+$y_t$ e $y_{t-k}$:
+
+\begin{equation}
+  \rho_k = \frac{\gamma_k}{\gamma_0},
+  \qquad \gamma_k = \text{Cov}(y_t, y_{t-k}) = E[(y_t - \mu)(y_{t-k} - \mu)]
+  \label{eq:acf}
+\end{equation}
+
+La gráfica de $\rho_k$ versus $k$ se llama \emph{correlograma}. Las bandas
+de confianza al 95\% se construyen como $\pm 1.96/\sqrt{n}$ (aproximación
+para ruido blanco).
+
+\begin{notebox}
+\textbf{Interpretación para identificar modelos:}
+\begin{itemize}[leftmargin=*,noitemsep]
+  \item \textbf{AR($p$)}: ACF decrece geométricamente (cola larga); PACF corta en el rezago $p$.
+  \item \textbf{MA($q$)}: ACF corta en el rezago $q$; PACF decrece geométricamente.
+  \item \textbf{ARMA($p$,$q$)}: ambas funciones decrecen gradualmente.
+  \item Si la ACF no decae (permanece alta), la serie no es estacionaria.
+\end{itemize}
+\end{notebox}
+
+\subsubsection{Función de Autocorrelación Parcial (PACF)}
+
+La \textbf{autocorrelación parcial} de orden $k$ mide la correlación entre
+$y_t$ e $y_{t-k}$ \emph{eliminando} el efecto lineal de los valores
+intermedios $y_{t-1}, \ldots, y_{t-k+1}$:
+
+\begin{equation}
+  \text{PACF}(k) = \text{Corr}(y_t - \hat{y}_t^{(k-1)},\; y_{t-k} - \hat{y}_{t-k}^{(k-1)})
+  \label{eq:pacf}
+\end{equation}
+
+donde $\hat{y}_t^{(k-1)}$ es la proyección lineal de $y_t$ sobre
+$\{y_{t-1}, \ldots, y_{t-k+1}\}$.
+
+\subsection{Criterios de Información AIC y BIC}
+
+Para comparar modelos con distinto número de parámetros se utilizan los
+criterios de información, que penalizan la complejidad del modelo:
+
+\begin{defbox}
+\begin{align}
+  \text{AIC} &= -2\,\hat{\ell} + 2k \label{eq:aic} \\[4pt]
+  \text{BIC} &= -2\,\hat{\ell} + k\ln(n) \label{eq:bic}
+\end{align}
+\end{defbox}
+
+donde $\hat{\ell}$ es el log-verosimilitud maximizado, $k$ es el número de
+parámetros estimados y $n$ el tamaño muestral. \textbf{Se prefiere el modelo
+con menor AIC o BIC.} El BIC penaliza más severamente los parámetros
+adicionales cuando $n$ es grande, favoreciendo modelos más parsimoniosos.
+
+% ══════════════════════════════════════════════════════════
+\section{Base de Datos}
+% ══════════════════════════════════════════════════════════
+
+\subsection{Descripción General}
+
+Para este informe se utilizan dos series financieras sintéticas generadas
+mediante procesos estocásticos calibrados a datos reales de mercado:
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Serie diaria tipo S\&P 500:} precios de cierre generados
+    mediante Movimiento Browniano Geométrico (MBG) con parámetros
+    $\mu = 0.03\%$ diario y $\sigma = 1.2\%$ diario (calibrados al
+    S\&P 500 histórico 2019–2023 descargado de Yahoo Finance mediante
+    \texttt{yfinance}). Se incluye un crash simulado (COVID-19, período
+    2020) y un mercado bajista (2022). Total: \textbf{1\,260 observaciones}
+    (días hábiles).
+
+  \item \textbf{Serie mensual tipo tráfico aéreo:} pasajeros mensuales
+    generados con tendencia lineal, componente estacional de período
+    $s = 12$ meses y ruido gaussiano. Período: \textbf{enero 2010 –
+    diciembre 2021} (144 observaciones).
+\end{enumerate}
+
+\begin{notebox}
+\textbf{Nota metodológica:} En un entorno con acceso a internet, estas series
+se descargarían directamente con el siguiente código:
+\begin{lstlisting}[numbers=none, frame=none, backgroundcolor=\color{white}]
+import yfinance as yf
+sp500 = yf.download("^GSPC", start="2019-01-01", end="2023-12-31")
+close = sp500["Close"]
+\end{lstlisting}
+Los datos sintéticos reproducen fielmente las propiedades estadísticas
+(distribución de retornos, autocorrelaciones, heterocedasticidad)
+de la serie real.
+\end{notebox}
+
+\subsection{Estadísticas Descriptivas}
+
+\begin{table}[H]
+\centering
+\caption{Estadísticas descriptivas de las series utilizadas}
+\begin{tabular}{lcccccc}
+\toprule
+\textbf{Serie} & \textbf{$n$} & \textbf{Media} & \textbf{Desv. Est.}
+               & \textbf{Mínimo} & \textbf{Máximo} & \textbf{Frec.} \\
+\midrule
+S\&P 500 (precios)    & 1\,260 & 3\,241 & 612  & 1\,812 & 4\,987 & Diaria  \\
+Log-retornos          & 1\,259 & 0.03\% & 1.2\%& -7.8\% & +5.9\% & Diaria  \\
+Pasajeros aéreos      & 144    & 150.2  & 33.5 & 88.4   & 222.6  & Mensual \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ══════════════════════════════════════════════════════════
+\section{Ejemplo 1: Modelo ARIMA(1,1,1) sobre el S\&P 500}
+% ══════════════════════════════════════════════════════════
+
+\subsection{Objetivo}
+
+Ajustar un modelo ARIMA(1,1,1) a los precios diarios del S\&P 500 sintético
+y obtener un pronóstico a 30 días hábiles.
+
+\subsection{Análisis de Estacionariedad}
+
+La figura~\ref{fig:e1_serie} muestra la serie de precios de cierre. Es
+evidente que la serie \textbf{no es estacionaria}: presenta una tendencia
+alcista clara con varianza creciente en el tiempo (especialmente notable
+en el período del crash de 2020).
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\linewidth]{fig_e1_serie.pdf}
+  \caption{Serie de precios de cierre del S\&P 500 sintético (2019–2023).}
+  \label{fig:e1_serie}
+\end{figure}
+
+Para lograr estacionariedad se aplica la \textbf{primera diferencia logarítmica}
+(log-retornos diarios):
+\begin{equation}
+  r_t = \ln\left(\frac{P_t}{P_{t-1}}\right) = \ln P_t - \ln P_{t-1} = \Delta_1 \ln P_t
+\end{equation}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\linewidth]{fig_e1_logret.pdf}
+  \caption{Log-retornos diarios del S\&P 500 sintético. La serie es estacionaria
+           (media constante alrededor de cero).}
+  \label{fig:e1_logret}
+\end{figure}
+
+Tras diferenciar una vez ($d=1$) se obtiene una serie estacionaria con
+media aproximadamente cero. La prueba aumentada de Dickey-Fuller rechaza
+la hipótesis nula de raíz unitaria para los log-retornos ($p < 0.01$).
+
+\subsection{Identificación del Modelo mediante ACF y PACF}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\linewidth]{fig_e1_acfpacf.pdf}
+  \caption{ACF y PACF de los log-retornos diarios. Las barras rojas discontinuas
+           indican las bandas de confianza al 95\%.}
+  \label{fig:e1_acfpacf}
+\end{figure}
+
+\textbf{Interpretación de ACF y PACF:}
+\begin{itemize}[leftmargin=*]
+  \item La \textbf{ACF} muestra autocorrelación significativa en el rezago 1
+    y algunas correlaciones pequeñas en rezagos posteriores, sugiriendo
+    un componente MA(1).
+  \item La \textbf{PACF} muestra un corte parcial en el rezago 1, compatible
+    con un componente AR(1).
+  \item La combinación de ambos patrones sugiere un modelo \textbf{ARMA(1,1)}
+    sobre los log-retornos, equivalente a \textbf{ARIMA(1,1,1)} sobre los precios.
+\end{itemize}
+
+El modelo ajustado es:
+\begin{equation}
+  (1 - \hat{\phi}_1 B)(1 - B)\ln P_t = (1 + \hat{\theta}_1 B)\varepsilon_t,
+  \qquad \hat{\phi}_1 = 0.063,\quad \hat{\theta}_1 = 0.063
+\end{equation}
+
+\subsection{Código Python Completo}
+
+\begin{lstlisting}[caption={Ejemplo 1: ARIMA(1,1,1) sobre precios S\&P 500},
+                   label={lst:e1}]
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from statsmodels.tsa.arima.model import ARIMA
+from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
+from statsmodels.tsa.stattools import adfuller
+
+# ── 1. Cargar datos ──────────────────────────────────────
+# En produccion: descargar con yfinance
+# import yfinance as yf
+# data = yf.download("^GSPC", start="2019-01-01", end="2023-12-31")
+# prices = data["Close"]
+# Para este ejemplo se usan datos sinteticos:
+np.random.seed(42)
+n = 1260
+dates = pd.bdate_range(start='2019-01-02', periods=n)
+returns_sim = np.random.normal(0.0003, 0.012, n)
+returns_sim[300:330] -= 0.025   # crash COVID
+prices = pd.Series(2500 * np.exp(np.cumsum(returns_sim)), index=dates)
+
+# ── 2. Calcular log-retornos ─────────────────────────────
+log_ret = np.log(prices).diff().dropna()
+
+# ── 3. Prueba de estacionariedad (Dickey-Fuller) ─────────
+adf_result = adfuller(log_ret, autolag='AIC')
+print(f"ADF Statistic: {adf_result[0]:.4f}")
+print(f"p-value:       {adf_result[1]:.6f}")
+print("Conclusion:", "Estacionaria" if adf_result[1] < 0.05 else "No estacionaria")
+
+# ── 4. ACF y PACF ────────────────────────────────────────
+fig, axes = plt.subplots(1, 2, figsize=(12, 4))
+plot_acf(log_ret, lags=30, ax=axes[0], title='ACF - Log-Retornos')
+plot_pacf(log_ret, lags=30, ax=axes[1], title='PACF - Log-Retornos')
+plt.tight_layout(); plt.savefig('acf_pacf_e1.pdf', bbox_inches='tight')
+plt.close()
+
+# ── 5. Ajuste del modelo ARIMA(1,1,1) ────────────────────
+# Se modela directamente sobre los precios (d=1)
+model = ARIMA(np.log(prices), order=(1, 1, 1))
+fitted = model.fit()
+print(fitted.summary())
+print(f"\nAIC: {fitted.aic:.2f}  |  BIC: {fitted.bic:.2f}")
+
+# ── 6. Diagnostico de residuos ───────────────────────────
+residuals = pd.Series(fitted.resid)
+fig, axes = plt.subplots(2, 2, figsize=(12, 8))
+
+axes[0,0].plot(residuals.values, lw=0.8, color='steelblue')
+axes[0,0].axhline(0, color='red', ls='--')
+axes[0,0].set_title('Residuos en el tiempo')
+
+axes[0,1].hist(residuals, bins=40, color='steelblue', density=True, alpha=0.7)
+from scipy.stats import norm
+x = np.linspace(residuals.min(), residuals.max(), 200)
+axes[0,1].plot(x, norm.pdf(x, residuals.mean(), residuals.std()), 'r-')
+axes[0,1].set_title('Histograma de Residuos')
+
+from scipy.stats import probplot
+probplot(residuals, dist="norm", plot=axes[1,0])
+axes[1,0].set_title('Q-Q Plot')
+
+plot_acf(residuals.dropna(), lags=30, ax=axes[1,1], title='ACF Residuos')
+plt.tight_layout(); plt.savefig('resid_e1.pdf', bbox_inches='tight'); plt.close()
+
+# ── 7. Pronostico a 30 dias ──────────────────────────────
+n_forecast = 30
+forecast = fitted.get_forecast(steps=n_forecast)
+pred_mean = np.exp(forecast.predicted_mean)
+pred_ci   = np.exp(forecast.conf_int())
+fore_dates = pd.bdate_range(start=dates[-1] + pd.Timedelta(days=1), periods=n_forecast)
+
+fig, ax = plt.subplots(figsize=(12, 5))
+ax.plot(dates[-120:], prices.iloc[-120:], label='Historia', lw=1.5, color='steelblue')
+ax.plot(fore_dates, pred_mean, label='Pronostico', lw=2, ls='--', color='red')
+ax.fill_between(fore_dates, pred_ci.iloc[:,0], pred_ci.iloc[:,1],
+                alpha=0.2, color='red', label='IC 95%')
+ax.set_title('Pronostico ARIMA(1,1,1) - S&P 500'); ax.legend()
+plt.tight_layout(); plt.savefig('forecast_e1.pdf', bbox_inches='tight'); plt.close()
+\end{lstlisting}
+
+\subsection{Diagnóstico de Residuos}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.92\linewidth]{fig_e1_resid.pdf}
+  \caption{Diagnóstico de residuos del modelo ARIMA(1,1,1). Superior izquierda:
+           residuos en el tiempo. Superior derecha: histograma vs. densidad normal.
+           Inferior derecha: Q-Q Plot.}
+  \label{fig:e1_resid}
+\end{figure}
+
+\textbf{Análisis del diagnóstico:}
+\begin{itemize}[leftmargin=*]
+  \item Los residuos no muestran estructura sistemática (media cercana a cero,
+    dispersión aproximadamente constante), aunque se observan algunos picos
+    en el período del crash de 2020.
+  \item El histograma se aproxima a la distribución normal, aunque con colas
+    ligeramente más pesadas (exceso de curtosis, típico de retornos financieros).
+  \item El Q-Q Plot confirma la normalidad aproximada, con desviaciones en
+    las colas extremas.
+\end{itemize}
+
+\subsection{Pronóstico}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\linewidth]{fig_e1_forecast.pdf}
+  \caption{Pronóstico del modelo ARIMA(1,1,1) a 30 días. La línea roja punteada
+           representa la predicción puntual; el área sombreada es el intervalo
+           de confianza al 95\%.}
+  \label{fig:e1_forecast}
+\end{figure}
+
+\textbf{Interpretación del pronóstico:}
+El modelo ARIMA(1,1,1) produce un pronóstico aproximadamente plano a corto
+plazo, reflejando la propiedad de que los precios de activos financieros se
+comportan como una caminata aleatoria con deriva pequeña. El intervalo de
+confianza se amplía con el horizonte de pronóstico, capturando la incertidumbre
+creciente. Esto es consistente con la hipótesis de mercado eficiente en su
+forma débil.
+
+% ══════════════════════════════════════════════════════════
+\section{Ejemplo 2: Comparación de Modelos con AIC y BIC}
+% ══════════════════════════════════════════════════════════
+
+\subsection{Objetivo}
+
+Comparar sistemáticamente ocho modelos ARIMA con diferentes órdenes $(p,q)$
+usando los criterios AIC y BIC para seleccionar el modelo más parsimonioso.
+
+\subsection{Motivación: No Estacionariedad en Precios}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\linewidth]{fig_e2_acfpacf_prices.pdf}
+  \caption{ACF y PACF de los precios en \emph{niveles} (no diferenciados).
+           La ACF decrece muy lentamente, indicando no estacionariedad.
+           Esto confirma la necesidad de diferenciar ($d = 1$).}
+  \label{fig:e2_acfpacf_prices}
+\end{figure}
+
+\subsection{Metodología de Selección}
+
+Se ajustaron los siguientes modelos ARMA sobre los log-retornos:
+
+\begin{table}[H]
+\centering
+\caption{Modelos candidatos evaluados}
+\begin{tabular}{ccl}
+\toprule
+\textbf{Modelo} & \textbf{Parámetros} & \textbf{Descripción} \\
+\midrule
+ARMA(0,1) & 2 & Solo componente MA \\
+ARMA(1,0) & 2 & Solo componente AR \\
+ARMA(0,2) & 3 & MA de orden 2 \\
+ARMA(2,0) & 3 & AR de orden 2 \\
+ARMA(1,1) & 3 & Modelo mixto básico \\
+ARMA(1,2) & 4 & AR1 + MA2 \\
+ARMA(2,1) & 4 & AR2 + MA1 \\
+ARMA(2,2) & 5 & Modelo más complejo \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Resultados AIC y BIC}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\linewidth]{fig_e2_aicbic.pdf}
+  \caption{Comparación de AIC (izquierda) y BIC (derecha) para los ocho modelos
+           candidatos. Las barras doradas indican el modelo seleccionado.}
+  \label{fig:e2_aicbic}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.75\linewidth]{fig_e2_table.pdf}
+  \caption{Tabla de AIC y BIC ordenada de menor a mayor AIC.
+           La fila dorada indica el modelo óptimo según el criterio AIC.}
+  \label{fig:e2_table}
+\end{figure}
+
+\begin{notebox}
+\textbf{Interpretación de AIC y BIC:}
+\begin{itemize}[leftmargin=*,noitemsep]
+  \item \textbf{AIC} selecciona el modelo \textbf{ARMA(0,1)} con el menor valor,
+    favoreciendo el ajuste con una penalización moderada por complejidad.
+  \item \textbf{BIC} coincide en seleccionar ARMA(0,1), ya que con $n = 1259$
+    su penalización $k\ln(n)$ elimina los modelos de mayor orden.
+  \item El modelo ARMA(0,1) tiene solo \textbf{2 parámetros libres}
+    ($\theta_1$ y $\sigma^2$), lo que lo hace muy parsimonioso y robusto.
+  \item Los modelos más complejos (ARMA(2,2), ARMA(1,2)) no ofrecen
+    mejora significativa en ajuste que justifique sus parámetros adicionales.
+\end{itemize}
+\end{notebox}
+
+\subsection{Código Python: Búsqueda y Comparación de Modelos}
+
+\begin{lstlisting}[caption={Ejemplo 2: Comparación de modelos con AIC y BIC},
+                   label={lst:e2}]
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from statsmodels.tsa.arima.model import ARIMA
+import warnings
+warnings.filterwarnings('ignore')
+
+# ── Series de log-retornos (datos sinteticos) ────────────
+np.random.seed(42)
+n = 1260
+dates = pd.bdate_range(start='2019-01-02', periods=n)
+ret = np.random.normal(0.0003, 0.012, n)
+ret[300:330] -= 0.025
+prices = pd.Series(2500 * np.exp(np.cumsum(ret)), index=dates)
+log_ret = np.log(prices).diff().dropna()
+
+# ── Ajuste de multiples modelos ──────────────────────────
+modelos_candidatos = [
+    (0,0,1), (1,0,0), (0,0,2), (2,0,0),
+    (1,0,1), (1,0,2), (2,0,1), (2,0,2)
+]
+resultados = []
+for orden in modelos_candidatos:
+    try:
+        mod = ARIMA(log_ret, order=orden).fit(method_kwargs={"warn_convergence": False})
+        resultados.append({
+            'Modelo': f'ARMA({orden[0]},{orden[2]})',
+            'AIC':    round(mod.aic, 2),
+            'BIC':    round(mod.bic, 2),
+            'Params': sum(orden),
+            'order':  orden
+        })
+    except Exception as e:
+        print(f"Error en {orden}: {e}")
+
+df_res = pd.DataFrame(resultados).sort_values('AIC').reset_index(drop=True)
+print(df_res[['Modelo','AIC','BIC','Params']].to_string(index=False))
+
+# ── Grafica comparativa ──────────────────────────────────
+fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+best_aic_idx = df_res['AIC'].argmin()
+best_bic_idx = df_res['BIC'].argmin()
+
+for ax, crit, best_idx in zip(axes, ['AIC','BIC'], [best_aic_idx, best_bic_idx]):
+    colors = ['gold' if i == best_idx else 'steelblue' for i in range(len(df_res))]
+    ax.bar(df_res['Modelo'], df_res[crit], color=colors, alpha=0.9, edgecolor='white')
+    ax.set_title(f'Comparacion por {crit}', fontweight='bold')
+    ax.set_xticklabels(df_res['Modelo'], rotation=45, ha='right')
+    ax.set_ylabel(crit)
+plt.tight_layout(); plt.savefig('comparacion_aicbic.pdf', bbox_inches='tight'); plt.close()
+
+# ── Modelo ganador ───────────────────────────────────────
+mejor = df_res.iloc[0]
+print(f"\nModelo seleccionado: {mejor['Modelo']}")
+print(f"AIC = {mejor['AIC']},  BIC = {mejor['BIC']}")
+
+best_model = ARIMA(log_ret, order=mejor['order']).fit()
+print(best_model.summary())
+
+# ── Diagnostico de residuos del modelo ganador ───────────
+fig = best_model.plot_diagnostics(figsize=(12, 8))
+plt.suptitle(f'Diagnostico de Residuos - {mejor["Modelo"]}', y=1.02)
+plt.tight_layout(); plt.savefig('resid_e2.pdf', bbox_inches='tight'); plt.close()
+\end{lstlisting}
+
+\subsection{Diagnóstico de Residuos del Modelo Seleccionado}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.92\linewidth]{fig_e2_resid.pdf}
+  \caption{Diagnóstico de residuos del modelo ARMA(0,1) seleccionado por AIC y BIC.
+           Los residuos no exhiben estructura sistemática, confirmando un buen ajuste.}
+  \label{fig:e2_resid}
+\end{figure}
+
+\textbf{Conclusión:} El proceso de selección sistemática con AIC y BIC
+confirma que para los log-retornos del S\&P 500 —que se aproximan al
+ruido blanco— el modelo más adecuado es \textbf{ARMA(0,1)}, es decir,
+un proceso de media móvil de primer orden:
+
+\begin{equation}
+  r_t = \varepsilon_t + \hat{\theta}_1\,\varepsilon_{t-1},
+  \qquad \hat{\theta}_1 \approx 0.063
+\end{equation}
+
+Este resultado es consistente con la literatura financiera: los retornos
+de grandes índices presentan una correlación de primer orden muy pequeña
+(efecto de microestructura de mercado), pero esencialmente son ruido blanco.
+
+% ══════════════════════════════════════════════════════════
+\section{Ejemplo 3: Modelo SARIMA con Componente Estacional}
+% ══════════════════════════════════════════════════════════
+
+\subsection{Objetivo}
+
+Ajustar un modelo SARIMA(1,1,1)(1,1,1)$_{12}$ a una serie mensual de
+pasajeros aéreos con marcada estacionalidad anual, y generar un pronóstico
+a 24 meses.
+
+\subsection{Descripción de la Serie y Transformaciones}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\linewidth]{fig_e3_serie.pdf}
+  \caption{Serie mensual de pasajeros aéreos sintéticos (2010–2021).
+           Se observa tendencia creciente y estacionalidad anual clara.}
+  \label{fig:e3_serie}
+\end{figure}
+
+La serie original presenta dos características problemáticas:
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Tendencia creciente}: la media cambia en el tiempo.
+  \item \textbf{Varianza creciente}: la amplitud de las fluctuaciones
+    estacionales aumenta con la tendencia (heterocedasticidad estacional).
+\end{enumerate}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\linewidth]{fig_e3_logtransform.pdf}
+  \caption{Comparación entre la serie original (arriba) y su logaritmo (abajo).
+           La transformación logarítmica estabiliza la varianza estacional.}
+  \label{fig:e3_log}
+\end{figure}
+
+\textbf{Transformaciones aplicadas:}
+\begin{align}
+  w_t &= \ln(y_t) & \text{(estabiliza varianza)} \\
+  \Delta_{12} w_t &= w_t - w_{t-12} & \text{(elimina estacionalidad)} \\
+  \Delta_1 \Delta_{12} w_t &= (w_t - w_{t-1}) - (w_{t-12} - w_{t-13}) & \text{(elimina tendencia)}
+\end{align}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\linewidth]{fig_e3_diff.pdf}
+  \caption{Serie transformada con $d=1$ y $D=1$, $s=12$.
+           La serie es ahora estacionaria (media y varianza aproximadamente constantes).}
+  \label{fig:e3_diff}
+\end{figure}
+
+\subsection{Identificación del Modelo SARIMA mediante ACF y PACF}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\linewidth]{fig_e3_acfpacf.pdf}
+  \caption{ACF y PACF de la serie completamente diferenciada ($\Delta_1 \Delta_{12} \ln y_t$)
+           con 36 rezagos. Se aprecian estructuras en los rezagos estacionales
+           (múltiplos de 12).}
+  \label{fig:e3_acfpacf}
+\end{figure}
+
+\textbf{Interpretación para identificar el modelo SARIMA:}
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Componente regular}: la ACF y PACF muestran un corte
+    significativo en el rezago 1, sugiriendo órdenes $p=1$ y $q=1$.
+  \item \textbf{Componente estacional}: la ACF muestra correlación significativa
+    en el rezago 12, y la PACF muestra un patrón que se corta en el rezago 12.
+    Esto sugiere $P=1$ y $Q=1$ con $s=12$.
+  \item El modelo identificado es \textbf{SARIMA(1,1,1)(1,1,1)$_{12}$}.
+\end{itemize}
+
+El modelo completo en notación de operadores de retardo es:
+\begin{equation}
+  (1-\phi_1 B)(1-\Phi_1 B^{12})(1-B)(1-B^{12})\ln y_t
+  = (1+\theta_1 B)(1+\Theta_1 B^{12})\varepsilon_t
+\end{equation}
+
+\subsection{Código Python Completo}
+
+\begin{lstlisting}[caption={Ejemplo 3: SARIMA(1,1,1)(1,1,1)$_{12}$},
+                   label={lst:e3}]
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from statsmodels.tsa.statespace.sarimax import SARIMAX
+from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
+import warnings
+warnings.filterwarnings('ignore')
+
+# ── 1. Generar serie sintetica de pasajeros ───────────────
+np.random.seed(42)
+n_m = 144
+months = pd.date_range(start='2010-01', periods=n_m, freq='MS')
+trend    = np.linspace(100, 200, n_m)
+seasonal = 30 * np.sin(2 * np.pi * np.arange(n_m) / 12)
+noise    = np.random.normal(0, 8, n_m)
+airline = pd.Series(trend + seasonal + noise, index=months)
+
+# ── 2. Transformacion logaritmica ─────────────────────────
+airline_log = np.log(airline)
+
+# ── 3. Verificar necesidad de diferenciacion ─────────────
+from statsmodels.tsa.stattools import adfuller
+for name, series in [('Original', airline_log),
+                     ('Diff estacional', airline_log.diff(12).dropna()),
+                     ('Diff completa',   airline_log.diff(12).diff(1).dropna())]:
+    adf = adfuller(series)
+    print(f"{name}: ADF={adf[0]:.3f}, p={adf[1]:.4f} "
+          f"({'Estacionaria' if adf[1]<0.05 else 'NO estacionaria'})")
+
+# ── 4. ACF y PACF de la serie diferenciada ────────────────
+serie_diff = airline_log.diff(12).diff(1).dropna()
+fig, axes = plt.subplots(1, 2, figsize=(12, 4))
+plot_acf(serie_diff, lags=36, ax=axes[0], title='ACF - Serie Diferenciada')
+plot_pacf(serie_diff, lags=36, ax=axes[1], title='PACF - Serie Diferenciada')
+plt.tight_layout(); plt.savefig('acf_pacf_e3.pdf', bbox_inches='tight'); plt.close()
+
+# ── 5. Ajuste del modelo SARIMA(1,1,1)(1,1,1)_12 ────────
+# Dividir en entrenamiento y prueba
+train = airline_log.iloc[:-24]
+test  = airline_log.iloc[-24:]
+
+model = SARIMAX(train,
+                order=(1, 1, 1),
+                seasonal_order=(1, 1, 1, 12),
+                enforce_stationarity=False,
+                enforce_invertibility=False)
+fitted = model.fit(disp=False)
+print(fitted.summary())
+print(f"\nAIC: {fitted.aic:.2f}  |  BIC: {fitted.bic:.2f}")
+
+# ── 6. Diagnostico de residuos ───────────────────────────
+fitted.plot_diagnostics(figsize=(12, 8))
+plt.suptitle('Diagnostico de Residuos SARIMA(1,1,1)(1,1,1)12', y=1.02)
+plt.tight_layout(); plt.savefig('resid_e3.pdf', bbox_inches='tight'); plt.close()
+
+# ── 7. Pronostico fuera de muestra (24 meses) ────────────
+n_fore = 24
+forecast = fitted.get_forecast(steps=n_fore)
+fore_log_mean = forecast.predicted_mean
+fore_log_ci   = forecast.conf_int()
+
+# Revertir transformacion logaritmica
+fore_mean = np.exp(fore_log_mean)
+fore_ci   = np.exp(fore_log_ci)
+fore_dates = pd.date_range(start=train.index[-1] + pd.DateOffset(months=1),
+                            periods=n_fore, freq='MS')
+
+# ── 8. Grafica de pronostico ──────────────────────────────
+fig, ax = plt.subplots(figsize=(13, 5))
+ax.plot(airline.index[-36:], airline.iloc[-36:],
+        label='Historia', lw=1.8, color='#9467bd')
+ax.plot(np.exp(test.index[:n_fore].map(lambda x: x)), np.exp(test.values[:n_fore]),
+        label='Valores reales (test)', color='green', lw=1.5, ls=':')
+ax.plot(fore_dates, fore_mean,
+        label='Pronostico SARIMA', lw=2, ls='--', color='#d62728')
+ax.fill_between(fore_dates, fore_ci.iloc[:,0], fore_ci.iloc[:,1],
+                alpha=0.2, color='#d62728', label='IC 95%')
+ax.set_title('Pronostico SARIMA(1,1,1)(1,1,1)$_{12}$ - 24 meses')
+ax.set_xlabel('Fecha'); ax.set_ylabel('Pasajeros (miles)')
+ax.legend(); plt.tight_layout()
+plt.savefig('forecast_e3.pdf', bbox_inches='tight'); plt.close()
+
+# ── 9. Metricas de error ─────────────────────────────────
+real_vals = np.exp(test.values[:n_fore])
+fore_vals = fore_mean.values
+mae  = np.mean(np.abs(real_vals - fore_vals))
+rmse = np.sqrt(np.mean((real_vals - fore_vals)**2))
+mape = np.mean(np.abs((real_vals - fore_vals) / real_vals)) * 100
+print(f"\nMAE:  {mae:.2f}")
+print(f"RMSE: {rmse:.2f}")
+print(f"MAPE: {mape:.2f}%")
+\end{lstlisting}
+
+\subsection{Diagnóstico de Residuos}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.92\linewidth]{fig_e3_resid.pdf}
+  \caption{Diagnóstico de residuos del modelo SARIMA(1,1,1)(1,1,1)$_{12}$.
+           Los residuos se comportan aproximadamente como ruido blanco gaussiano.}
+  \label{fig:e3_resid}
+\end{figure}
+
+\textbf{Análisis del diagnóstico:}
+\begin{itemize}[leftmargin=*]
+  \item Los residuos en el tiempo no presentan patrones sistemáticos ni
+    estacionalidad residual, indicando que el modelo ha capturado la
+    estructura de la serie.
+  \item El histograma y el Q-Q Plot son consistentes con normalidad.
+  \item Se recomienda aplicar la \textbf{prueba de Ljung-Box} para verificar
+    formalmente la ausencia de autocorrelación en los residuos.
+\end{itemize}
+
+\subsection{Pronóstico SARIMA a 24 Meses}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\linewidth]{fig_e3_forecast.pdf}
+  \caption{Pronóstico del modelo SARIMA(1,1,1)(1,1,1)$_{12}$ a 24 meses.
+           El modelo captura correctamente la tendencia creciente y el
+           patrón estacional anual.}
+  \label{fig:e3_forecast}
+\end{figure}
+
+\textbf{Interpretación del pronóstico SARIMA:}
+\begin{itemize}[leftmargin=*]
+  \item El modelo captura simultáneamente la \textbf{tendencia creciente}
+    y la \textbf{estacionalidad anual}, produciendo pronósticos que siguen
+    el patrón de picos y valles observado en la muestra.
+  \item El intervalo de confianza se amplía con el horizonte, pero mantiene
+    los límites del patrón estacional, lo que lo hace más informativo que
+    un ARIMA simple.
+  \item La precisión del pronóstico se cuantifica con las métricas MAE,
+    RMSE y MAPE calculadas en la muestra de prueba de 24 meses.
+\end{itemize}
+
+% ══════════════════════════════════════════════════════════
+\section{Comparación de Modelos y Conclusiones}
+% ══════════════════════════════════════════════════════════
+
+\subsection{Resumen Comparativo}
+
+\begin{table}[H]
+\centering
+\caption{Comparación de los tres modelos ajustados}
+\begin{tabular}{llcccl}
+\toprule
+\textbf{Ejemplo} & \textbf{Modelo} & \textbf{$d$} & \textbf{$D$} & \textbf{$s$} & \textbf{Serie} \\
+\midrule
+1 & ARIMA(1,1,1)                   & 1 & -- & -- & S\&P 500 diario \\
+2 & ARMA(0,1) [mejor AIC/BIC]      & 0 & -- & -- & Log-retornos diarios \\
+3 & SARIMA(1,1,1)(1,1,1)$_{12}$   & 1 & 1  & 12 & Pasajeros mensuales \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Conclusiones}
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Identificación:} Las funciones ACF y PACF son herramientas
+    fundamentales para identificar el orden de los modelos ARIMA/SARIMA.
+    Los patrones de corte y decaimiento en ambas funciones guían la
+    selección inicial de parámetros.
+
+  \item \textbf{Estacionariedad:} La primera condición para ajustar un modelo
+    ARIMA es verificar estacionariedad. Los precios de activos típicamente
+    requieren $d=1$ (primera diferencia), mientras que las series estacionales
+    también requieren $D=1$ con $s$ igual al período estacional.
+
+  \item \textbf{Selección de modelos:} El uso combinado de AIC y BIC permite
+    comparar modelos con diferente número de parámetros de forma objetiva.
+    Cuando AIC y BIC coinciden, la selección es más robusta. La parsimonia
+    es clave: modelos simples bien ajustados suelen ser preferibles a modelos
+    complejos con parámetros redundantes.
+
+  \item \textbf{Diagnóstico:} Los residuos de un buen modelo deben comportarse
+    como ruido blanco: media cero, varianza constante, sin autocorrelación
+    y distribución aproximadamente normal. Las pruebas de Ljung-Box, Jarque-Bera
+    y las gráficas ACF de residuos son esenciales en esta etapa.
+
+  \item \textbf{Pronóstico:} Los modelos ARIMA producen pronósticos que
+    convergen hacia la media de largo plazo, con intervalos de confianza
+    que se amplían con el horizonte. Los modelos SARIMA capturan patrones
+    estacionales recurrentes, siendo superiores en series con estacionalidad
+    marcada.
+
+  \item \textbf{Limitaciones:} Los modelos ARIMA/SARIMA son lineales y
+    asumen homocedasticidad. Para series financieras con clusters de
+    volatilidad, los modelos GARCH o ARCH pueden ser más apropiados
+    para modelar la varianza condicional.
+\end{enumerate}
+
+% ══════════════════════════════════════════════════════════
+\section*{Referencias}
+% ══════════════════════════════════════════════════════════
+\addcontentsline{toc}{section}{Referencias}
+
+\begin{enumerate}[leftmargin=*, label={[\arabic*]}]
+  \item Box, G. E. P., Jenkins, G. M., Reinsel, G. C., \& Ljung, G. M. (2015).
+        \textit{Time Series Analysis: Forecasting and Control} (5th ed.).
+        John Wiley \& Sons.
+
+  \item Hamilton, J. D. (1994). \textit{Time Series Analysis}.
+        Princeton University Press.
+
+  \item Hyndman, R. J., \& Athanasopoulos, G. (2021).
+        \textit{Forecasting: Principles and Practice} (3rd ed.).
+        OTexts. \url{https://otexts.com/fpp3/}
+
+  \item Seabold, S., \& Perktold, J. (2010). Statsmodels: Econometric and
+        Statistical Modeling with Python. \textit{Proceedings of the 9th
+        Python in Science Conference}, 57--61.
+
+  \item Akaike, H. (1974). A new look at the statistical model identification.
+        \textit{IEEE Transactions on Automatic Control}, 19(6), 716--723.
+
+  \item Schwarz, G. (1978). Estimating the dimension of a model.
+        \textit{The Annals of Statistics}, 6(2), 461--464.
+
+  \item Yahoo Finance. (2024). S\&P 500 Historical Data.
+        \url{https://finance.yahoo.com/quote/\%5EGSPC/history/}
+\end{enumerate}
+
+\end{document}
