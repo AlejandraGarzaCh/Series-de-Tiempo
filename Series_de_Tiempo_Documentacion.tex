@@ -1,0 +1,49 @@
+
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{amsmath}
+\usepackage{geometry}
+\geometry{margin=1in}
+
+\title{Documentación del Notebook de Series de Tiempo}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section{Objetivo}
+El notebook presenta una introducción práctica al análisis de series de tiempo utilizando Python.
+
+\section{Temas}
+\begin{itemize}
+\item Procesos AR(1)
+\item Comparación AR(1) vs AR(2)
+\item Residuos y diagnóstico
+\item AIC y BIC
+\item Modelos ARIMA
+\item Funciones ACF y PACF
+\end{itemize}
+
+\section{Fórmulas Relevantes}
+
+Modelo AR(1):
+\[
+X_t = c + \phi X_{t-1} + \varepsilon_t
+\]
+
+AIC:
+\[
+AIC = 2k - 2\ln(L)
+\]
+
+BIC:
+\[
+BIC = k\ln(n) - 2\ln(L)
+\]
+
+Modelo ARIMA$(p,d,q)$.
+
+\section{Conclusión}
+La selección de modelos se apoya en AIC/BIC, mientras que ACF y PACF ayudan a identificar la estructura temporal de la serie.
+\end{document}
