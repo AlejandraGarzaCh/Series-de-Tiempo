@@ -1,0 +1,43 @@
+
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{amsmath}
+\usepackage{geometry}
+\geometry{margin=1in}
+
+\title{Documentación del Notebook SARIMA}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section{Introducción}
+Los modelos SARIMA extienden ARIMA incorporando componentes estacionales.
+
+\section{Modelo General}
+\[
+SARIMA(p,d,q)(P,D,Q,s)
+\]
+
+donde:
+\begin{itemize}
+\item p: orden autorregresivo
+\item d: diferenciación regular
+\item q: media móvil
+\item P: componente AR estacional
+\item D: diferenciación estacional
+\item Q: componente MA estacional
+\item s: periodicidad estacional
+\end{itemize}
+
+\section{Herramientas de Identificación}
+ACF y PACF permiten identificar componentes AR y MA.
+
+\section{Selección del Modelo}
+Se utilizan criterios AIC y BIC para comparar especificaciones.
+
+\section{Diagnóstico}
+Los residuos deben comportarse como ruido blanco.
+
+\end{document}
