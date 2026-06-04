@@ -1,0 +1,37 @@
+
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{amsmath}
+\usepackage{geometry}
+\geometry{margin=1in}
+
+\title{Documentación: Random Walk}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section{Objetivo}
+Estudiar el comportamiento de un proceso Random Walk en series de tiempo.
+
+\section{Definición}
+Un Random Walk puede expresarse como:
+\[
+X_t = X_{t-1} + \varepsilon_t
+\]
+
+donde $\varepsilon_t$ representa ruido blanco.
+
+\section{Propiedades}
+\begin{itemize}
+\item No estacionario.
+\item La varianza crece con el tiempo.
+\item Presenta alta persistencia.
+\item Los shocks tienen efectos permanentes.
+\end{itemize}
+
+\section{Importancia}
+Muchos precios financieros pueden aproximarse mediante procesos Random Walk.
+
+\end{document}
