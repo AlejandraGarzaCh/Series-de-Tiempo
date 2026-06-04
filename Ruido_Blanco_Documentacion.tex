@@ -1,0 +1,37 @@
+
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{amsmath}
+\usepackage{geometry}
+\geometry{margin=1in}
+
+\title{Documentación: Ruido Blanco}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section{Objetivo}
+Analizar el concepto de ruido blanco dentro de las series de tiempo.
+
+\section{Definición}
+Un proceso de ruido blanco cumple:
+\[
+X_t \sim WN(0,\sigma^2)
+\]
+
+donde las observaciones son independientes, tienen media constante y varianza constante.
+
+\section{Propiedades}
+\begin{itemize}
+\item Media igual a cero.
+\item Varianza constante.
+\item Ausencia de autocorrelación.
+\item Comportamiento aleatorio.
+\end{itemize}
+
+\section{Importancia}
+Los residuos de un buen modelo de series de tiempo deberían comportarse como ruido blanco.
+
+\end{document}
